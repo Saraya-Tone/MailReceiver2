@@ -101,21 +101,26 @@ function receiveMailMain () {
 	
 	allMails.forEach( function(oneMail) {
 
-		var theMail = new ds.Mailbox(); 
-		
-		theMail.title =  oneMail["Subject"] ;
-		var folderpath = getpath(theMail.title);
-		if (folderpath == "none") return; // 件名に拠点名がなければ処理しない=>実際はreceiveMailsでフィルタ済
-		
 		var msgid = oneMail["Message-ID"];
 		if (msgid == undefined) {
 			msgid = oneMail["Message-Id"];
 		}	
-	
+
 		var found = ds.Mailbox.find("messageID = :1",msgid);
 		
-		if (found != null && found.allSaved == true) return; // すでにメールがあり添付保存済みならば以下の処理は実行しない 
-//		if (found != null ) return; // すでにメールがあれば以下の処理は実行しない 
+		if (found != null) {
+			if  (found.allSaved == true)  {
+				return; 	// すでにメールがあり添付保存済みならば以下の処理は実行しない 
+			} else {	
+				var theMail = found;
+			}
+		} else {
+			var theMail = new ds.Mailbox(); 
+		}			
+		
+		theMail.title =  oneMail["Subject"] ;
+		var folderpath = getpath(theMail.title);
+		if (folderpath == "none") return; // 件名に拠点名がなければ処理しない=>実際はreceiveMailsでフィルタ済
 		
 		theMail.messageID = msgid; 
 		theMail.sender = oneMail["From"] ;
@@ -152,7 +157,7 @@ function receiveMailMain () {
 				if (found == null) {
 					var theAttachment = new ds.Attachment();
 				} else {
-					var theAttachment = found.attachments[i];
+					var theAttachment = theMail.attachments[i];
 				}
 					
 				theAttachment.afileName = filename;
@@ -177,14 +182,8 @@ function receiveMailMain () {
 					
 					theAttachment.afileStatus = savestat;					
 					
-					if (found == null ) {
-						theMail.save();   	// メールデータ保存
-						var key = theMail.getKey();
-					} else {
-						found.allSaved = theMail.allSaved;
-						found.save();
-						var key = found.getKey();
-					}
+					theMail.save();   	// メールデータ保存
+					var key = theMail.getKey();
 					
 					theAttachment.mailbox = (key);
 					
@@ -210,7 +209,7 @@ function receiveMailMain () {
 		}
 		
 
-		if (found == null ) theMail.save();	// メールデータ保存
+		theMail.save();	// メールデータ保存
 
 	});
 	
