@@ -5,6 +5,8 @@
 	<database>
 
 		<journal enabled="true" journalFolder="./"/>
+
+		<autoRecovery integrateJournal="true" restoreFromLastBackup="true"/>
 </database>
 </project>
 

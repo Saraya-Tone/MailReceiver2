@@ -1,4 +1,5 @@
-﻿// Global Var
+﻿
+// Global Var
 attachedFilePath = "C:/MailReceiver/attachedfiles/";
 //attachedFilePath = "C:/Users/tone/Documents/Wakanda/attachedfiles/";
 //attachedFilePath = "/Users/kuni/Documents/Wakanda/Attached/";
@@ -53,24 +54,23 @@ function getpath(subject) {
 }
 
 function receiveMailMain () {
-//	var pop3 = require("waf-mail/POP3");
-	var mailer = require('mailer');
+	var pop3 = require("waf-mail/POP3");
 
 
 	var allMails = [];
 
 
-	var addr = "pop.gmail.com"; 
-	var user = "yashi.receiver01@gmail.com";
-	var pass = "yashinomi2013";
-	var port = 995;
-	var isSSL = true;
+//	var addr = "pop.gmail.com"; 
+//	var user = "yashi.receiver01@gmail.com";
+//	var pass = "yashinomi2013";
+//	var port = 995;
+//	var isSSL = true;
 //	
-//	var addr = "post2.saraya.com"; 
-//	var user = "receiver@saraya.com";
-//	var pass = "password";
-//	var port = 110;
-//	var isSSL = false;
+	var addr = "post2.saraya.com"; 
+	var user = "receiver@saraya.com";
+	var pass = "password";
+	var port = 110;
+	var isSSL = false;
 //	
 //	var addr = "10.1.1.28"; 
 //	var user = "ktone";
@@ -95,17 +95,18 @@ function receiveMailMain () {
 
 	var millseconds;
 
-	var doMarkForDeletion = false;
 
-	var rc = mailer.receiveMails(addr, port , isSSL , user, pass, allMails, doMarkForDeletion, folders);
-	
+	var rc = pop3.getAllMail(addr, port , isSSL , user, pass, allMails ) 	;
+	rc;
+
+
 	allMails.forEach( function(oneMail) {
 
 		var theMail = new ds.Mailbox(); 
 		
 		theMail.title =  oneMail["Subject"] ;
 		var folderpath = getpath(theMail.title);
-		if (folderpath == "none") return; // 件名に拠点名がなければ処理しない=>実際はreceiveMailsでフィルタ済
+		if (folderpath == "none") return; // 件名に拠点名がなければ処理しない
 		
 		var msgid = oneMail["Message-ID"];
 		if (msgid == undefined) {
@@ -115,7 +116,6 @@ function receiveMailMain () {
 		var found = ds.Mailbox.find("messageID = :1",msgid);
 		
 		if (found != null && found.allSaved == true) return; // すでにメールがあり添付保存済みならば以下の処理は実行しない 
-//		if (found != null ) return; // すでにメールがあれば以下の処理は実行しない 
 		
 		theMail.messageID = msgid; 
 		theMail.sender = oneMail["From"] ;
@@ -148,13 +148,7 @@ function receiveMailMain () {
 				filename =  aPart.fileName;
 				theMail.bodyText = theMail.bodyText+"\n("+i+") Type="+mediaType+",filename="+filename;
 				// 添付ファイル情報の保存
-				
-				if (found == null) {
-					var theAttachment = new ds.Attachment();
-				} else {
-					var theAttachment = found.attachments[i];
-				}
-					
+				var theAttachment = new ds.Attachment();
 				theAttachment.afileName = filename;
 				theAttachment.afileSize = aPart.size;
 				
@@ -177,20 +171,13 @@ function receiveMailMain () {
 					
 					theAttachment.afileStatus = savestat;					
 					
-					if (found == null ) {
-						theMail.save();   	// メールデータ保存
-						var key = theMail.getKey();
-					} else {
-						found.allSaved = theMail.allSaved;
-						found.save();
-						var key = found.getKey();
-					}
-					
+					theMail.save();   			// メールデータ保存
+					var key = theMail.getKey();
 					theAttachment.mailbox = (key);
 					
 					theAttachment.afile = aPart.asBlob;
 					
-					theAttachment.save();  // 添付ファイルデータ保存
+					theAttachment.save();		// 添付ファイルデータ保存
 					
 					
 					
@@ -210,7 +197,7 @@ function receiveMailMain () {
 		}
 		
 
-		if (found == null ) theMail.save();	// メールデータ保存
+		theMail.save();	// メールデータ保存
 
 	});
 	
@@ -221,14 +208,14 @@ function receiveMailMain () {
 
 
 
-guidedModel =// @startlock
+guidedModel =
 {
 	Attachment :
 	{
 		afileStatMsg :
 		{
 			onGet:function()
-			{// @endlock
+			{
 				switch (this.afileStatus) {
 					case 1:
 					return "添付未保存";
@@ -240,7 +227,7 @@ guidedModel =// @startlock
 					return 	(this.afileStatus + "??");							
 				}	 
 				
-			}// @startlock
+			}
 		}
 	},
 	Mailbox :
@@ -248,38 +235,38 @@ guidedModel =// @startlock
 		dateString :
 		{
 			onGet:function()
-			{// @endlock
+			{
 				var wkdate = this.sentDate;
 				
 				return formatDateTime(wkdate);
 				
 				// end function
-			}// @startlock
+			}
 		},
 		collectionMethods :
-		{// @endlock
+		{
 			getNewMailCollection:function()
-			{// @lock
+			{
 				receiveMailMain ();
-			}// @startlock
+			}
 		},
 		methods :
-		{// @endlock
+		{
 			allMailProcessed:function()
-			{// @lock
+			{
 				var allMails = ds.Mailbox.all();
 				allMails.forEach( function(oneMail) {
 					oneMail.allSaved = true;
 					oneMail.save();			
 				});
 				return;
-			},// @lock
+			},
 			getNewMails:function()
-			{// @lock
+			{
 				receiveMailMain ();
-			},// @lock
+			},
 			saveSelectedFiles:function(id)
-			{// @lock
+			{
 				var theMail = ds.Mailbox(id); 
 				
 				fileArray = theMail.attachments;
@@ -300,7 +287,7 @@ guidedModel =// @startlock
 				theMail.allSaved = true;
 				theMail.savedFilecount = true;				
 				theMail.save(); 
-			}// @startlock
+			}
 		}
 	}
-};// @endlock
+};
