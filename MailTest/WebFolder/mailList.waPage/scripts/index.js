@@ -41,12 +41,16 @@ WAF.onAfterInit = function onAfterInit() {// @lock
 
 	saveFiles.click = function saveFiles_click (event)// @startlock
 	{// @endlock
-//		var id = $$('dataGrid1').column("ID").getFormattedValue(); 
 		var idnum  = $$('dataGrid1').column("ID").getValueForInput();
-//		alert("保存開始 "+idnum);
+		var sentdate  = $$('dataGrid1').column("dateString").getValueForInput();
+		
 		ds.Mailbox.saveSelectedFiles(idnum); // Class Method を同期実行
+
+		alert("保存終了 送信日時＝"+sentdate);
 		location.reload();
-		alert("保存終了");
+//		$$('dataGrid1').trigger("click");
+//		$$('dataGrid1').centerRow(4);
+//		sources.mailbox.select(rownum[0]);
 		
 	};// @lock
 

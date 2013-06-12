@@ -3,9 +3,98 @@
 
 	For more information, refer to http://doc.wakanda.org/Wakanda Studio0.Beta/help/Title/en/page3355.html
 */
+function saveMail(oneMail) {
+	
+	var msgid = oneMail["Message-ID"];
+	if (msgid == undefined) {
+		msgid = oneMail["Message-Id"];
+	}	
+
+	var found = ds.Mailbox.find("messageID = :1",msgid);
+	
+	if (found != null)  return; // 新規メールのみ追加	
+	
+	var theMail = new ds.Mailbox(); 
+	
+	theMail.title =  oneMail["Subject"] ;
+	
+	theMail.messageID = msgid; 
+	theMail.sender = oneMail["From"] ;
+
+	theMail.sentDate  = oneMail["Date"];
+	
+	if (theMail.dateString < "2013/02/01 00:00:00") return; // 特定日付以前のメールは対象外
+	
+	theMail.isMIME = oneMail.isMIME();
+	
+	if (theMail.isMIME == true ) 
+	{
+		var parts=oneMail.getMessageParts();
+		var aPart;     // メールのMIMEパート 
+		var mediaType; // MIME Type
+		var filename ; // 添付ファイル名
+		
+		
+		theMail.bodyText=" ";
+		theMail.savedFilecount = 0;
+		theMail.allSaved = false;
+		
+		var len = parts.length;
+		
+		for (i=0;i<len;i++) {	
+			aPart = parts[i];
+			mediaType = aPart.mediaType;
+			filename =  aPart.fileName;
+			theMail.bodyText = theMail.bodyText+"\n("+i+") Type="+mediaType+",filename="+filename;
+			
+			theMail.save();   	// メールデータ保存
+			
+			// 添付ファイル情報の保存
+			
+			var theAttachment = new ds.Attachment();
+				
+			theAttachment.afileName = filename;
+			theAttachment.afileSize = aPart.size;
+			
+			if (filename != "" ) 
+			{		
+				
+				theAttachment.afileStatus = 1;  // 添付ファイル未保存			
+
+				var key = theMail.getKey();
+				
+				theAttachment.mailbox = (key);
+				
+				theAttachment.afile = aPart.asBlob;
+				
+				theAttachment.save();  // 添付ファイルデータベース書き込み
+				
+				
+				
+			} else {
+				theBody = oneMail.getBody();
+				if (theBody != null)
+				{
+					theMail.bodyText = theMail.bodyText + "\n"+ oneMail.getBody().join("\n");
+					theMail.save();	// メールデータ保存
+				}
+			}	
+			
+			
+		};
+	} else {	
+		var body = oneMail.getBody();
+		theMail.bodyText = body.join("\n");
+		theMail.save();	// メールデータ保存
+	}
+	
+	return;
+
+}
 
 
-exports.receiveMails = function receiveMails(address, port, isSSL, username, password, allMails, doMarkForDeletion, folders) {
+
+exports.receiveMails = function receiveMails(address, port, isSSL, username, password, doMarkForDeletion, folders) {
 	// pop3.getAllMail( )のソースを元に必要なメールのみ配列に格納するように変更
 	
 	var isWakanda	= typeof requireNative != 'undefined';
@@ -117,13 +206,13 @@ exports.receiveMails = function receiveMails(address, port, isSSL, username, pas
 					
 					var subject = newMail["Subject"];
 					
-					console.log('Date='+newMail["Date"]+',Subject='+subject);
+//					console.log('Date='+newMail["Date"]+',Subject='+subject);
 					
 					var j = 0;
 					for (j=0; (j<folderNumbers && folders[j] > " "); j++) {
 						var ix = subject.indexOf(folders[j]);
 						if (subject.indexOf(folders[j]) >= 0 ) {
-							allMails.push(newMail);     // 件名にfolder名を含むもののみ配列に格納
+							saveMail(newMail);     // mailをデータベースに保存
 						}	
 					}	 
 					

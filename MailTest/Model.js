@@ -56,10 +56,6 @@ function receiveMailMain () {
 //	var pop3 = require("waf-mail/POP3");
 	var mailer = require('mailer');
 
-
-	var allMails = [];
-
-
 	var addr = "pop.gmail.com"; 
 	var user = "yashi.receiver01@gmail.com";
 	var pass = "yashinomi2013";
@@ -97,123 +93,52 @@ function receiveMailMain () {
 
 	var doMarkForDeletion = false;
 
-	var rc = mailer.receiveMails(addr, port , isSSL , user, pass, allMails, doMarkForDeletion, folders);
+	var rc = mailer.receiveMails(addr, port , isSSL , user, pass, doMarkForDeletion, folders);
 	
-	allMails.forEach( function(oneMail) {
-
-		var msgid = oneMail["Message-ID"];
-		if (msgid == undefined) {
-			msgid = oneMail["Message-Id"];
-		}	
-
-		var found = ds.Mailbox.find("messageID = :1",msgid);
+	var workset = ds.Mailbox.query(" allSaved == false "); //添付未保存メールのみ抽出
+	
+	var allMails = workset.orderBy("dateString"); // 日付の昇順にソート
+	
+//	return; //////////////////// for test ///////////////
+	
+	allMails.forEach( function(oneMail) {  // データベース内の添付ファイルを外部フォルダに保存
 		
-		if (found != null) {
-			if  (found.allSaved == true)  {
-				return; 	// すでにメールがあり添付保存済みならば以下の処理は実行しない 
-			} else {	
-				var theMail = found;
-			}
-		} else {
-			var theMail = new ds.Mailbox(); 
-		}			
+		var folderpath = getpath(oneMail.title);
 		
-		theMail.title =  oneMail["Subject"] ;
-		var folderpath = getpath(theMail.title);
 		if (folderpath == "none") return; // 件名に拠点名がなければ処理しない=>実際はreceiveMailsでフィルタ済
 		
-		theMail.messageID = msgid; 
-		theMail.sender = oneMail["From"] ;
-
-		theMail.sentDate  = oneMail["Date"];
+		var len = oneMail.attachments.length;
 		
-		if (theMail.dateString < "2013/01/01 00:00:00") return; // 2013年以前のメールは対象外
+		oneMail.allSaved = true;
 		
-		theMail.isMIME = oneMail.isMIME();
-		
-		if (theMail.isMIME == true ) 
-		{
-			var parts=oneMail.getMessageParts();
-			var aPart;     // メールのMIMEパート 
-			var mediaType; // MIME Type
-			var filename ; // 添付ファイル名
+		for (i=0;i<len;i++) {	
+			var theAttachment = oneMail.attachments[i];
 			
+			var filename = theAttachment.afileName;
 			
-			theMail.bodyText=" ";
-			theMail.savedFilecount = 0;
-			theMail.allSaved = true;
+			var fileobj = File(folderpath+filename);
 			
+			if (fileobj.exists) {			
+				theAttachment.afileStatus = 1;  // ファイルあり、上書き不可
+				oneMail.allSaved = false;
+			} else {
+				theAttachment.afileStatus = 2;  // ファイルなし、新規保存
+				var theBlob = theAttachment.afile;
+				theBlob.copyTo(fileobj);        // 添付ファイル書き出し
+				theAttachment.afileSaveDate = formatDateTime();
+				oneMail.savedFilecount++;
+			}		
 			
-			var len = parts.length;
-			var savestat = 9;   
+			theAttachment.save();  // 添付ファイルデータベース更新		
 			
-			for (i=0;i<len;i++) {	
-				aPart = parts[i];
-				mediaType = aPart.mediaType;
-				filename =  aPart.fileName;
-				theMail.bodyText = theMail.bodyText+"\n("+i+") Type="+mediaType+",filename="+filename;
-				// 添付ファイル情報の保存
-				
-				if (found == null) {
-					var theAttachment = new ds.Attachment();
-				} else {
-					var theAttachment = theMail.attachments[i];
-				}
-					
-				theAttachment.afileName = filename;
-				theAttachment.afileSize = aPart.size;
-				
-				if (filename != "" ) 
-				{
-					var fileobj = File(folderpath+filename);
-					if (fileobj.exists) 
-					{
-						savestat = 1;  // ファイルあり、上書き不可
-						theMail.allSaved = false;
-//						aPart.save(folderpath,true); //添付ファイルを外部フォルダに上書き保存
-
-					} else 
-					{
-						savestat = 2;  // ファイルなし、新規保存
-						aPart.save(folderpath); //添付ファイルを外部フォルダに保存
-						theAttachment.afileSaveDate = formatDateTime();
-						theMail.savedFilecount++;
-					}		
-					
-					theAttachment.afileStatus = savestat;					
-					
-					theMail.save();   	// メールデータ保存
-					var key = theMail.getKey();
-					
-					theAttachment.mailbox = (key);
-					
-					theAttachment.afile = aPart.asBlob;
-					
-					theAttachment.save();  // 添付ファイルデータ保存
-					
-					
-					
-				} else {
-					theBody = oneMail.getBody();
-					if (theBody != null)
-					{
-						theMail.bodyText = theMail.bodyText + "\n"+ oneMail.getBody().join("\n");
-					}
-				}	
-				
-				
-			};
-		} else {	
-			var body = oneMail.getBody();
-			theMail.bodyText = body.join("\n");
 		}
 		
-
-		theMail.save();	// メールデータ保存
+		oneMail.save();   	// メールデータ更新
 
 	});
 	
 	return;
+	
 }
 
 
@@ -297,7 +222,7 @@ guidedModel =// @startlock
 					
 				});
 				theMail.allSaved = true;
-				theMail.savedFilecount = true;				
+				theMail.savedFilecount = i;				
 				theMail.save(); 
 			}// @startlock
 		}
