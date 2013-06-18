@@ -6,8 +6,11 @@ attachedFilePath = "C:/MailReceiver/attachedfiles/";
 folders = new Array(); // メールの件名に含まれる文字列に応じてサブフォルダを決定
 
 var locationfilename = "location.txt";  // このファイルの改行コードはCRLFであること
+var intervalfilename = "interval.txt";  // 自動メール受信間隔　分単位
 
 folders = loadText( attachedFilePath + locationfilename ).split("\r\n");
+var intervalMinutesArray  = loadText( attachedFilePath + intervalfilename ).split("\r\n");
+var intervalMinutes  = intervalMinutesArray[0];
 
 folderNumbers = folders.length;
 
@@ -54,6 +57,9 @@ function getpath(subject) {
 
 function receiveMailMain () {
 //	var pop3 = require("waf-mail/POP3");
+
+	console.log('====receiveMailMain=============');
+
 	var mailer = require('mailer');
 
 	var addr = "pop.gmail.com"; 
@@ -62,11 +68,11 @@ function receiveMailMain () {
 	var port = 995;
 	var isSSL = true;
 //	
-//	var addr = "post2.saraya.com"; 
-//	var user = "receiver@saraya.com";
-//	var pass = "password";
-//	var port = 110;
-//	var isSSL = false;
+	var addr = "post2.saraya.com"; 
+	var user = "receiver@saraya.com";
+	var pass = "password";
+	var port = 110;
+	var isSSL = false;
 //	
 //	var addr = "10.1.1.28"; 
 //	var user = "ktone";
@@ -180,15 +186,18 @@ guidedModel =// @startlock
 				// end function
 			}// @startlock
 		},
-		collectionMethods :
-		{// @endlock
-			getNewMailCollection:function()
-			{// @lock
-				receiveMailMain ();
-			}// @startlock
-		},
 		methods :
 		{// @endlock
+			repeatGetNewMails:function()
+			{// @lock
+				var interval = intervalMinutes * 60 * 1000; // 分をmsに換算
+//				var id = setInterval(receiveMailMain, interval);  // intervalの時間間隔でreceiveMailMain実行
+
+				var worker = new Worker('Mail/child.js');
+
+				return;
+//				wait();
+			},// @lock
 			allMailProcessed:function()
 			{// @lock
 				var allMails = ds.Mailbox.all();
@@ -200,6 +209,7 @@ guidedModel =// @startlock
 			},// @lock
 			getNewMails:function()
 			{// @lock
+
 				receiveMailMain ();
 			},// @lock
 			saveSelectedFiles:function(id)

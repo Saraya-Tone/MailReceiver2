@@ -34,8 +34,9 @@ WAF.onAfterInit = function onAfterInit() {// @lock
 
 	documentEvent.onLoad = function documentEvent_onLoad (event)// @startlock
 	{// @endlock
-//		var id = setInterval(sources.mailbox.getNewMailCollection, 3*60*1000);  // 一時的にコメントアウト　本番時に使用		
+	
 		$$('dataGrid1').setSortIndicator(1,"desc");　// 送信日付降順ソートを表示
+		$("#dataGrid1").css("border","2px solid black");
 
 	};// @lock
 
@@ -56,7 +57,7 @@ WAF.onAfterInit = function onAfterInit() {// @lock
 
 	getNewMail.click = function getNewMail_click (event)// @startlock
 	{// @endlock
-//		sources.mailbox.getNewMailCollection(); 
+
 		ds.Mailbox.getNewMails();
 		location.reload();
 

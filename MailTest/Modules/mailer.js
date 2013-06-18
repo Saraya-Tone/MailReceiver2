@@ -95,7 +95,7 @@ function saveMail(oneMail) {
 
 
 exports.receiveMails = function receiveMails(address, port, isSSL, username, password, doMarkForDeletion, folders) {
-	// pop3.getAllMail( )のソースを元に必要なメールのみ配列に格納するように変更
+	// pop3.getAllMail( )のソースを元に必要なメールのみデータベースに格納するように変更
 	
 	var isWakanda	= typeof requireNative != 'undefined';
 	var pop3 = require('waf-mail/POP3'); 
