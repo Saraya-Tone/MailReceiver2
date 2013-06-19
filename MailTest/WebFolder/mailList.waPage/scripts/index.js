@@ -58,7 +58,8 @@ WAF.onAfterInit = function onAfterInit() {// @lock
 	getNewMail.click = function getNewMail_click (event)// @startlock
 	{// @endlock
 
-		ds.Mailbox.getNewMails();
+		var rc = ds.Mailbox.getNewMails();
+		alert (rc);
 		location.reload();
 
 	};// @lock

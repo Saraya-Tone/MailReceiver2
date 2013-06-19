@@ -1,26 +1,40 @@
 ﻿// Global Var
-attachedFilePath = "C:/MailReceiver/attachedfiles/";
+var attachedFilePath = "C:/MailReceiver/attachedfiles/";
 //attachedFilePath = "C:/Users/tone/Documents/Wakanda/attachedfiles/";
 //attachedFilePath = "/Users/kuni/Documents/Wakanda/Attached/";
 
-folders = new Array(); // メールの件名に含まれる文字列に応じてサブフォルダを決定
+var folders = new Array(); // メールの件名に含まれる文字列に応じてサブフォルダを決定
+var folderNumbers = 0 ; 
+var locationfilename ; // 拠点名ファイル
+var intervalfilename ; // 自動メール受信間隔指定ファイル名
+var intervalMinutes  ; // 自動メール受信間隔　分単位
+var mailMutex; 		   // 排他制御
 
-var locationfilename = "location.txt";  // このファイルの改行コードはCRLFであること
-var intervalfilename = "interval.txt";  // 自動メール受信間隔　分単位
+function initclass() {
+	
+	if (folderNumbers > 0) return;
+	
+	mailMutex = Mutex('mailMutex');
+	
+	locationfilename = "location.txt";  // このファイルの改行コードはCRLFであること
+	intervalfilename = "interval.txt";  // 
 
-folders = loadText( attachedFilePath + locationfilename ).split("\r\n");
-var intervalMinutesArray  = loadText( attachedFilePath + intervalfilename ).split("\r\n");
-var intervalMinutes  = intervalMinutesArray[0];
+	folders = loadText( attachedFilePath + locationfilename ).split("\r\n");
+	var intervalMinutesArray  = loadText( attachedFilePath + intervalfilename ).split("\r\n");
+	intervalMinutes  = intervalMinutesArray[0];
 
-folderNumbers = folders.length;
+	folderNumbers = folders.length;
+
+	return;
+}
 
 function formatDateTime(datetime) {  // datetime = string data of date and time
-	var date2 ;
+	
 	if (datetime == undefined || datetime == null) {
-		date2 = new Date();
+		var date2 = new Date();
 	} else {
 		var millseconds = Date.parse(datetime);
-		date2 = new Date();
+		var date2 = new Date();
 		date2.setTime(millseconds);
 	}
 	
@@ -55,10 +69,19 @@ function getpath(subject) {
 	return ("none");
 }
 
-function receiveMailMain () {
+function receiveMailMain (loop) {
 //	var pop3 = require("waf-mail/POP3");
 
 	console.log('====receiveMailMain=============');
+	
+	if (loop == true) {
+		mailMutex.lock();
+	} else {
+		var locked = mailMutex.tryToLock();	
+		if (!locked) {
+			return false; // 受信ボタンを押したときにすでに処理中
+		}
+	}	
 
 	var mailer = require('mailer');
 
@@ -143,7 +166,8 @@ function receiveMailMain () {
 
 	});
 	
-	return;
+	mailMutex.unlock();	
+	return true;
 	
 }
 
@@ -190,16 +214,15 @@ guidedModel =// @startlock
 		{// @endlock
 			repeatGetNewMails:function()
 			{// @lock
-				var interval = intervalMinutes * 60 * 1000; // 分をmsに換算
-//				var id = setInterval(receiveMailMain, interval);  // intervalの時間間隔でreceiveMailMain実行
-
+				initclass();
 				var worker = new Worker('Mail/child.js');
-
+				worker.postMessage(intervalMinutes); 
 				return;
 //				wait();
 			},// @lock
 			allMailProcessed:function()
 			{// @lock
+				initclass();
 				var allMails = ds.Mailbox.all();
 				allMails.forEach( function(oneMail) {
 					oneMail.allSaved = true;
@@ -207,13 +230,15 @@ guidedModel =// @startlock
 				});
 				return;
 			},// @lock
-			getNewMails:function()
+			getNewMails:function(loop)
 			{// @lock
-
-				receiveMailMain ();
+				initclass();
+				var rc = receiveMailMain (loop);
+				return rc;
 			},// @lock
 			saveSelectedFiles:function(id)
 			{// @lock
+				initclass();
 				var theMail = ds.Mailbox(id); 
 				
 				fileArray = theMail.attachments;

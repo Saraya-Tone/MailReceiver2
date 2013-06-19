@@ -3,6 +3,29 @@
 	Changes to this CSS file might be lost when it is regenerated.
 */
 
+#textField1 {
+	 width: 284px;
+	 height: 267px;
+	 top: 385px;
+	 left: 636px;
+	
+	 position: absolute;
+	 border-top-width: 0px;
+	 border-left-width: 0px;
+	 border-right-width: 0px;
+	 
+}
+
+#label2 {
+	 width: 31px;
+	 height: 15px;
+	 top: 511px;
+	 left: 600px;
+	
+	 position: absolute;
+	 
+}
+
 #video1 {
 	 width: 500px;
 	 height: 280px;
