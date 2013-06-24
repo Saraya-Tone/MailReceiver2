@@ -1,7 +1,7 @@
 ﻿var nbLoops = 0; 
 var interval = 300000 ; 　// 繰り返し秒数（ミリセカンド）
 var looplimit = 70 ; 　　　// 繰り返し限度回数
-var durationHour = 1 ; // 実行継続時間 
+var durationHour = 22 ; // 実行継続時間 
 
 
 
