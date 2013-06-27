@@ -72,15 +72,18 @@ function getpath(subject) {
 function receiveMailMain (loop) {
 //	var pop3 = require("waf-mail/POP3");
 
-	console.log('====receiveMailMain=============');
+//	console.log('====receiveMailMain=============');
 	
 	if (loop == true) {
 		mailMutex.lock();
+		console.log('====receiveMailMain STARTED with Lock=============');
 	} else {
 		var locked = mailMutex.tryToLock();	
 		if (!locked) {
+			console.log('====receiveMailMain did not Start=============');
 			return false; // 受信ボタンを押したときにすでに処理中
 		}
+		console.log('====receiveMailMain STARTED with tryToLock=============');
 	}	
 
 	var mailer = require('mailer');

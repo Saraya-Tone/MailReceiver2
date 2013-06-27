@@ -59,7 +59,9 @@ WAF.onAfterInit = function onAfterInit() {// @lock
 	{// @endlock
 
 		var rc = ds.Mailbox.getNewMails();
-		alert (rc);
+		if (rc == false) {
+			alert ("別の受信処理が実行中です");
+		}
 		location.reload();
 
 	};// @lock
