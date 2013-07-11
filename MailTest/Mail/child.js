@@ -12,6 +12,7 @@ function repeatFunction() {
     nbLoops++;
     if (nbLoops < looplimit) {
     	var loop = true;
+    	console.log("***** Loop Count = "+nbLoops);
     	ds.Mailbox.getNewMails(loop);
         setTimeout(function() {repeatFunction()},interval);
     }
