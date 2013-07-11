@@ -94,11 +94,11 @@ function receiveMailMain (loop) {
 	var port = 995;
 	var isSSL = true;
 //	
-	var addr = "post2.saraya.com"; 
-	var user = "receiver@saraya.com";
-	var pass = "password";
-	var port = 110;
-	var isSSL = false;
+//	var addr = "post2.saraya.com"; 
+//	var user = "receiver@saraya.com";
+//	var pass = "password";
+//	var port = 110;
+//	var isSSL = false;
 //	
 //	var addr = "10.1.1.28"; 
 //	var user = "ktone";

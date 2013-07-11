@@ -29,8 +29,8 @@
 
 #richText5 {
 	 z-index: 2;
-	 width: 55px;
-	 height: 28px;
+	 width: 60px;
+	 height: 32px;
 	 top: 14px;
 	 left: 723px;
 	
@@ -68,7 +68,7 @@
 }
 
 #label4 {
-	 width: 104px;
+	 width: 96px;
 	 height: 16px;
 	 top: 14px;
 	 left: 172px;
@@ -99,7 +99,7 @@
 }
 
 #dataGrid3 {
-	 width: 541px;
+	 width: 539px;
 	 height: 300px;
 	 top: 346px;
 	 left: 595px;
