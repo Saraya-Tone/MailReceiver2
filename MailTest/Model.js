@@ -51,7 +51,7 @@ function formatDateTime(datetime) {  // datetime = string data of date and time
 	if (minutes < 10) { minutes = "0" + minutes; }
 	if (ss < 10) { ss = "0" + ss; }
 
-	var formatedDate = yy + "/" + mm + "/" + dd + " " + hh + ":" + minutes + ":" + ss
+	var formatedDate = yy + "/" + mm + "/" + dd + " " + hh + ":" + minutes + ":" + ss;
 
 	return formatedDate;	
 }	
